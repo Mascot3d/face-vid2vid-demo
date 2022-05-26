@@ -23,7 +23,6 @@ if sys.version_info[0] < 3:
     raise Exception("You must use Python 3 or higher. Recommended version is Python 3.7")
 
 def load_checkpoints(config_path, checkpoint_path, gen, cpu=False):
-
     with open(config_path) as f:
         config = yaml.load(f)
 
@@ -48,14 +47,18 @@ def load_checkpoints(config_path, checkpoint_path, gen, cpu=False):
         he_estimator.cuda()
     
     if cpu:
-        checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
+        generator_model = torch.load(os.path.join(checkpoint_path, '00000189-generator.pth'), map_location=torch.device('cpu'))
+        kp_detector_model = torch.load(os.path.join(checkpoint_path, '00000189-kp_detector.pth'), map_location=torch.device('cpu'))
+        he_estimator_model = torch.load(os.path.join(checkpoint_path, '00000189-he_estimator.pth'), map_location=torch.device('cpu'))
     else:
-        checkpoint = torch.load(checkpoint_path)
+        generator_model = torch.load(os.path.join(checkpoint_path, '00000189-generator.pth'))
+        kp_detector_model = torch.load(os.path.join(checkpoint_path, '00000189-kp_detector.pth'))
+        he_estimator_model = torch.load(os.path.join(checkpoint_path, '00000189-he_estimator.pth'))
  
-    generator.load_state_dict(checkpoint['generator'])
-    kp_detector.load_state_dict(checkpoint['kp_detector'])
-    he_estimator.load_state_dict(checkpoint['he_estimator'])
-    
+    generator.load_state_dict(generator_model)
+    kp_detector.load_state_dict(kp_detector_model)
+    he_estimator.load_state_dict(he_estimator_model)
+
     if not cpu:
         generator = DataParallelWithCallback(generator)
         kp_detector = DataParallelWithCallback(kp_detector)
@@ -240,7 +243,7 @@ def find_best_frame(source, driving, cpu=False):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--config", default='config/vox-256.yaml', help="path to config")
-    parser.add_argument("--checkpoint", default='', help="path to checkpoint to restore")
+    parser.add_argument("--checkpoint", default='', help="path to checkpoint folder to restore which includes three pth files")
 
     parser.add_argument("--source_image", default='', help="path to source image")
     parser.add_argument("--driving_video", default='', help="path to driving video")
